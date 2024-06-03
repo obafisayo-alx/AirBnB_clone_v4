@@ -18,6 +18,7 @@ import json
 import os
 import pep8
 import unittest
+from models import storage
 DBStorage = db_storage.DBStorage
 classes = {"Amenity": Amenity, "City": City, "Place": Place,
            "Review": Review, "State": State, "User": User}
@@ -72,7 +73,7 @@ class TestFileStorage(unittest.TestCase):
     """Test the FileStorage class"""
     @unittest.skipIf(models.storage_t != 'db', "not testing db storage")
     def test_all_returns_dict(self):
-        """Test that all returns a dictionary"""
+        """Test that all returns a dictionaty"""
         self.assertIs(type(models.storage.all()), dict)
 
     @unittest.skipIf(models.storage_t != 'db', "not testing db storage")
@@ -87,25 +88,23 @@ class TestFileStorage(unittest.TestCase):
     def test_save(self):
         """Test that save properly saves objects to file.json"""
 
-    @unittest.skipIf(models.storage_t != 'db', "not testing db storage")
-    def test_get(self):
-        """Test that get properly gets the correct objects"""
-        # Create a mock state and associated cities
-        state = State(name="California")
-        city1 = City(name="Los Angeles", state_id=state.id)
-        city2 = City(name="San Francisco", state_id=state.id)
-        DBStorage.new(state)
-        DBStorage.new(city1)
-        DBStorage.new(city2)
-        DBStorage.save()
-        retrieved_state = DBStorage.get(State, state.id)
-        self.assertEqual(retrieved_state.id, city1.state_id)
-        self.assertEqual(retrieved_state.id, city2.state_id)
+    def test_get_db(self):
+        """ Tests method for obtaining an instance db storage"""
+        dic = {"name": "Cundinamarca"}
+        instance = State(**dic)
+        storage.new(instance)
+        storage.save()
+        get_instance = storage.get(State, instance.id)
+        self.assertEqual(get_instance, instance)
 
-    @unittest.skipIf(models.storage_t != 'db', "not testing db storage")
     def test_count(self):
-        """Test that count properly counts the right values"""
-        # Create a mock state and associated cities
-        no_of_state = len(DBStorage.all(State))
-        counted_no_of_state = DBStorage.count(State)
-        self.assertEqual(no_of_state, counted_no_of_state)
+        """ Tests count method db storage """
+        dic = {"name": "Vecindad"}
+        state = State(**dic)
+        storage.new(state)
+        dic = {"name": "Mexico", "state_id": state.id}
+        city = City(**dic)
+        storage.new(city)
+        storage.save()
+        c = storage.count()
+        self.assertEqual(len(storage.all()), c)

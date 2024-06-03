@@ -4,6 +4,7 @@ Contains the FileStorage class
 """
 
 import json
+import models
 from models.amenity import Amenity
 from models.base_model import BaseModel
 from models.city import City
@@ -11,13 +12,14 @@ from models.place import Place
 from models.review import Review
 from models.state import State
 from models.user import User
+from hashlib import md5
 
 classes = {"Amenity": Amenity, "BaseModel": BaseModel, "City": City,
            "Place": Place, "Review": Review, "State": State, "User": User}
 
 
 class FileStorage:
-    """Serializes instances to a JSON file & deserializes back to instances"""
+    """serializes instances to a JSON file & deserializes back to instances"""
 
     # string - path to the JSON file
     __file_path = "file.json"
@@ -25,7 +27,7 @@ class FileStorage:
     __objects = {}
 
     def all(self, cls=None):
-        """Returns the dictionary __objects"""
+        """returns the dictionary __objects"""
         if cls is not None:
             new_dict = {}
             for key, value in self.__objects.items():
@@ -41,25 +43,23 @@ class FileStorage:
             self.__objects[key] = obj
 
     def save(self):
-        """Serializes __objects to the JSON file (path: __file_path)"""
+        """serializes __objects to the JSON file (path: __file_path)"""
         json_objects = {}
         for key in self.__objects:
-            json_objects[key] = self.__objects[key].to_dict()
+            if key == "password":
+                json_objects[key].decode()
+            json_objects[key] = self.__objects[key].to_dict(save_fs=1)
         with open(self.__file_path, 'w') as f:
             json.dump(json_objects, f)
 
     def reload(self):
-        """Deserializes the JSON file to __objects"""
+        """deserializes the JSON file to __objects"""
         try:
             with open(self.__file_path, 'r') as f:
                 jo = json.load(f)
             for key in jo:
                 self.__objects[key] = classes[jo[key]["__class__"]](**jo[key])
-        except FileNotFoundError:
-            # Handle the case when the file is not found
-            pass
-        except json.JSONDecodeError:
-            # Handle JSON decoding errors
+        except:
             pass
 
     def delete(self, obj=None):
@@ -70,27 +70,35 @@ class FileStorage:
                 del self.__objects[key]
 
     def close(self):
-        """Calls reload() method for deserializing the JSON file to objects"""
+        """call reload() method for deserializing the JSON file to objects"""
         self.reload()
 
     def get(self, cls, id):
         """
-        fetches specific object
-        :param cls: class of object as string
-        :param id: id of object as string
-        :return: found object or None
+        Returns the object based on the class name and its ID, or
+        None if not found
         """
-        all_class = self.all(cls)
+        if cls not in classes.values():
+            return None
 
-        for obj in all_class.values():
-            if id == str(obj.id):
-                return obj
+        all_cls = models.storage.all(cls)
+        for value in all_cls.values():
+            if (value.id == id):
+                return value
 
         return None
 
     def count(self, cls=None):
-        """Counts the number of objects in storage matching the given class"""
-        if cls:
-            return len(self.all(cls))
+        """
+        count the number of objects in storage
+        """
+        all_class = classes.values()
+
+        if not cls:
+            count = 0
+            for clas in all_class:
+                count += len(models.storage.all(clas).values())
         else:
-            return len(self.all())
+            count = len(models.storage.all(cls).values())
+
+        return count

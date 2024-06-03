@@ -156,6 +156,5 @@ No known bugs at this time.
 ## Authors
 Obafisayo Abimbola - [Github](https://github.com/obafisayo-alx) / [Twitter](https://twitter.com/obafisayo_og)
 
-Second part of Airbnb: Joann Vuong
 ## License
 Public Domain. No copy write protection. 
